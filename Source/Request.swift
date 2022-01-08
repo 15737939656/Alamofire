@@ -1721,7 +1721,12 @@ public class DownloadRequest: Request {
             } else {
                 // Resume to ensure metrics are gathered.
                 task.resume()
-                task.cancel(byProducingResumeData: { _ in })
+                // Work around download cancellation bug (FB7619240) on OS versions prior to 2020.
+                if #available(macOS 11, iOS 14, tvOS 14, watchOS 7, *) {
+                    task.cancel()
+                } else {
+                    task.cancel(byProducingResumeData: { _ in })
+                }
                 self.underlyingQueue.async { self.didCancelTask(task) }
             }
         }
